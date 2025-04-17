@@ -1,21 +1,26 @@
-# MCP-NAV
+# MCP-NAV v0.2.0
 
 Un servidor MCP (Model Context Protocol) para navegar y acceder al contenido de [modelcontextprotocol.io](https://modelcontextprotocol.io/).
 
 ## Características
 
-- Navegar por páginas de modelcontextprotocol.io
-- Buscar contenido en el sitio
-- Extraer texto y contenido de las páginas
-- Seguir enlaces dentro del dominio
-- Ver historial de navegación
+- Navegación web con caché inteligente
+- Búsqueda semántica con ponderación de relevancia
+- Conversión automática HTML a Markdown
+- Sistema de reintentos con backoff exponencial
+- Gestión de memoria optimizada
+- Healthcheck integrado
+- Seguridad mejorada con usuario no privilegiado
+- Soporte para Docker
 
 ## Tecnología
 
-Este servidor MCP utiliza:
-- **Protocolo de Transporte**: SSE (Server-Sent Events)
-- **Puerto**: 9090 (configurable mediante la variable de entorno MCP_NAV_PORT)
-- **URL del servidor**: http://localhost:9090/sse
+- **Runtime**: Python 3.8+
+- **Framework**: FastMCP 1.3.0+
+- **Transporte**: SSE (Server-Sent Events)
+- **Puerto**: 9090 (configurable)
+- **Caché**: En memoria con TTL
+- **Contenedorización**: Docker + Docker Compose
 
 ## Estructura del Proyecto
 
@@ -32,74 +37,158 @@ mcp-nav/
 
 ## Instalación
 
+### Usando Docker (Recomendado)
+
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/mcp-nav.git
+git clone <url-del-repo>
+cd mcp-nav
+
+# Construir y ejecutar con Docker Compose
+docker-compose up -d
+```
+
+### Instalación Local
+
+```bash
+# Clonar el repositorio
+git clone <url-del-repo>
 cd mcp-nav
 
 # Instalar con Poetry
 poetry install
+
+# O con pip
+pip install -e .
 ```
 
 ## Uso
 
+### Con Docker
+
 ```bash
 # Iniciar el servidor
-poetry run mcp-nav
+docker-compose up -d
+
+# Ver logs
+docker logs mcp-nav-server
+
+# Detener el servidor
+docker-compose down
 ```
 
-O ejecutar directamente el módulo Python:
+### Sin Docker
 
 ```bash
-# Iniciar el servidor
+# Iniciar con Poetry
 poetry run python -m app
+
+# O directamente con Python
+python -m app
 ```
 
-## Configuración con Cursor
+## Configuración
 
-Para usar con Cursor, agrega esta configuración en tu archivo mcp.json:
+### Variables de Entorno
 
-```json
-{
-  "mcpServers": {
-    "MCP-NAV": {
-      "url": "http://localhost:9090/sse"
-    }
-  }
-}
-```
+| Variable | Descripción | Default |
+|----------|-------------|---------|
+| `MCP_NAV_PORT` | Puerto del servidor | 9090 |
+| `MCP_NAV_CACHE_TTL` | TTL del caché en segundos | 3600 |
+| `MCP_NAV_KEEP_HTML` | Mantener HTML en respuestas | 0 |
 
-## Herramientas disponibles
+### Docker Compose
 
-- `navigate(url)`: Navegar a una URL específica en modelcontextprotocol.io
-- `current_page()`: Obtener el contenido de la página actual
-- `search(query)`: Buscar contenido en el sitio
-- `browse_history()`: Ver historial de navegación
-- `extract_links()`: Obtener todos los enlaces de la página actual
-- Recurso `current_url`: Acceder a la URL actual
+El archivo `docker-compose.yml` incluye:
+- Healthcheck configurado
+- Reinicio automático
+- Mapeo de puertos
+- Variables de entorno predefinidas
 
-## Verificación del servidor
+## API y Herramientas
 
-Puedes verificar que el servidor está funcionando correctamente accediendo a:
-```
-http://localhost:9090/ping
-```
+### Herramientas MCP
 
-Debería responder con `pong` si el servidor está activo.
+- `navigate(url)`: Navegar a una URL
+- `current_page()`: Obtener página actual
+- `search(query)`: Búsqueda inteligente
+- `browse_history()`: Ver historial
+- `extract_links()`: Obtener enlaces
+- `clear_cache()`: Limpiar caché
+- `current_url` (recurso): URL actual
 
-## Usando MCP Inspector
+### Endpoints HTTP
 
-Puedes probar el servidor con MCP Inspector:
+- `GET /sse`: Endpoint SSE principal
+- `GET /ping`: Healthcheck
+
+## Características Avanzadas
+
+### Sistema de Caché
+
+- Almacenamiento en memoria con TTL configurable
+- Invalidación automática
+- Gestión eficiente de memoria
+- Estadísticas de hit/miss
+
+### Búsqueda Inteligente
+
+- Ponderación de relevancia (título: 2x, contenido: 1x)
+- Snippets contextuales
+- Ordenamiento por relevancia
+- Búsqueda en contenido completo
+
+### Gestión de Errores
+
+- Reintentos automáticos
+- Backoff exponencial
+- Logging detallado
+- Recuperación de fallos
+
+### Seguridad
+
+- Usuario no privilegiado en Docker
+- Sanitización de URLs
+- Validación de dominios
+- Límites de tamaño configurables
+
+## Monitoreo
+
+### Healthcheck
 
 ```bash
-npx @modelcontextprotocol/inspector -- poetry run mcp-nav
+# Verificar estado
+curl http://localhost:9090/ping
+# Respuesta esperada: pong
 ```
 
-El inspector abrirá una interfaz web en `http://localhost:6274` donde podrás probar todas las herramientas disponibles.
+### Logs
 
-## Variables de Entorno
+```bash
+# Con Docker
+docker logs mcp-nav-server
 
-- `MCP_NAV_PORT`: Puerto en el que se ejecutará el servidor (por defecto: 9090)
+# Sin Docker
+tail -f mcp-nav.log
+```
+
+## Desarrollo
+
+### Requisitos
+
+- Python 3.8+
+- Poetry o pip
+- Docker y Docker Compose (opcional)
+
+### Setup Desarrollo
+
+```bash
+# Instalar dependencias de desarrollo
+poetry install --with dev
+
+# Ejecutar tests
+poetry run pytest
+```
 
 ## Licencia
 
