@@ -1,195 +1,156 @@
-# MCP-NAV v0.2.0
+# MCP-NAV v0.3.0
 
-Un servidor MCP (Model Context Protocol) para navegar y acceder al contenido de [modelcontextprotocol.io](https://modelcontextprotocol.io/).
+Servidor MCP para navegar modelcontextprotocol.io con características avanzadas.
 
 ## Características
 
-- Navegación web con caché inteligente
-- Búsqueda semántica con ponderación de relevancia
-- Conversión automática HTML a Markdown
-- Sistema de reintentos con backoff exponencial
-- Gestión de memoria optimizada
-- Healthcheck integrado
-- Seguridad mejorada con usuario no privilegiado
-- Soporte para Docker
+- Navegación y búsqueda en modelcontextprotocol.io
+- Caché de contenido con Redis
+- Búsqueda semántica con Elasticsearch
+- Gestión de usuarios y autenticación
+- Métricas con Prometheus
+- Trazabilidad con OpenTelemetry
+- Logging estructurado con structlog
 
-## Tecnología
+## Requisitos
 
-- **Runtime**: Python 3.8+
-- **Framework**: FastMCP 1.3.0+
-- **Transporte**: SSE (Server-Sent Events)
-- **Puerto**: 9090 (configurable)
-- **Caché**: En memoria con TTL
-- **Contenedorización**: Docker + Docker Compose
-
-## Estructura del Proyecto
-
-```
-mcp-nav/
-│
-├── app/
-│   ├── __init__.py       # Configuración principal y definición de tools
-│   └── __main__.py       # Punto de entrada para ejecutar el servidor
-│
-├── pyproject.toml        # Dependencias y configuración del proyecto
-└── README.md             # Documentación del proyecto
-```
+- Python 3.11+
+- Redis 5.0+
+- Elasticsearch 8.12+
+- Docker 20.10+ (opcional)
+- Docker Compose 2.0+ (opcional)
 
 ## Instalación
 
-### Usando Docker (Recomendado)
+### Usando Poetry
 
 ```bash
-# Clonar el repositorio
-git clone <url-del-repo>
-cd mcp-nav
-
-# Construir y ejecutar con Docker Compose
-docker-compose up -d
-```
-
-### Instalación Local
-
-```bash
-# Clonar el repositorio
-git clone <url-del-repo>
-cd mcp-nav
-
-# Instalar con Poetry
+# Instalar dependencias
 poetry install
 
-# O con pip
-pip install -e .
+# Activar entorno virtual
+poetry shell
 ```
 
-## Uso
-
-### Con Docker
+### Usando Docker
 
 ```bash
-# Iniciar el servidor
+# Construir imagen
+docker build -t mcp-nav .
+
+# Ejecutar contenedor
+docker run -p 9090:9090 mcp-nav
+```
+
+### Usando Docker Compose
+
+```bash
+# Levantar servicios
 docker-compose up -d
-
-# Ver logs
-docker logs mcp-nav-server
-
-# Detener el servidor
-docker-compose down
-```
-
-### Sin Docker
-
-```bash
-# Iniciar con Poetry
-poetry run python -m app
-
-# O directamente con Python
-python -m app
 ```
 
 ## Configuración
 
-### Variables de Entorno
+La configuración se realiza mediante variables de entorno:
 
-| Variable | Descripción | Default |
-|----------|-------------|---------|
-| `MCP_NAV_PORT` | Puerto del servidor | 9090 |
-| `MCP_NAV_CACHE_TTL` | TTL del caché en segundos | 3600 |
-| `MCP_NAV_KEEP_HTML` | Mantener HTML en respuestas | 0 |
+| Variable | Descripción | Valor por defecto |
+|----------|-------------|-------------------|
+| MCP_NAV_PORT | Puerto del servidor | 9090 |
+| MCP_NAV_HOST | Host del servidor | 0.0.0.0 |
+| MCP_NAV_REDIS_HOST | Host de Redis | localhost |
+| MCP_NAV_REDIS_PORT | Puerto de Redis | 6379 |
+| MCP_NAV_ES_HOST | Host de Elasticsearch | localhost |
+| MCP_NAV_ES_PORT | Puerto de Elasticsearch | 9200 |
+| MCP_NAV_CACHE_TTL | TTL del caché (segundos) | 3600 |
+| MCP_NAV_JWT_SECRET | Clave secreta para JWT | your-secret-key |
 
-### Docker Compose
+## API REST
 
-El archivo `docker-compose.yml` incluye:
-- Healthcheck configurado
-- Reinicio automático
-- Mapeo de puertos
-- Variables de entorno predefinidas
+### Usuarios
 
-## API y Herramientas
+#### Crear usuario
+```http
+POST /users/
+Content-Type: application/json
 
-### Herramientas MCP
-
-- `navigate(url)`: Navegar a una URL
-- `current_page()`: Obtener página actual
-- `search(query)`: Búsqueda inteligente
-- `browse_history()`: Ver historial
-- `extract_links()`: Obtener enlaces
-- `clear_cache()`: Limpiar caché
-- `current_url` (recurso): URL actual
-
-### Endpoints HTTP
-
-- `GET /sse`: Endpoint SSE principal
-- `GET /ping`: Healthcheck
-
-## Características Avanzadas
-
-### Sistema de Caché
-
-- Almacenamiento en memoria con TTL configurable
-- Invalidación automática
-- Gestión eficiente de memoria
-- Estadísticas de hit/miss
-
-### Búsqueda Inteligente
-
-- Ponderación de relevancia (título: 2x, contenido: 1x)
-- Snippets contextuales
-- Ordenamiento por relevancia
-- Búsqueda en contenido completo
-
-### Gestión de Errores
-
-- Reintentos automáticos
-- Backoff exponencial
-- Logging detallado
-- Recuperación de fallos
-
-### Seguridad
-
-- Usuario no privilegiado en Docker
-- Sanitización de URLs
-- Validación de dominios
-- Límites de tamaño configurables
-
-## Monitoreo
-
-### Healthcheck
-
-```bash
-# Verificar estado
-curl http://localhost:9090/ping
-# Respuesta esperada: pong
+{
+    "email": "user@example.com",
+    "name": "John Doe",
+    "password": "secret"
+}
 ```
 
-### Logs
+#### Obtener usuario
+```http
+GET /users/{user_id}
+```
 
-```bash
-# Con Docker
-docker logs mcp-nav-server
+#### Actualizar usuario
+```http
+PUT /users/{user_id}
+Content-Type: application/json
 
-# Sin Docker
-tail -f mcp-nav.log
+{
+    "name": "Jane Doe"
+}
+```
+
+#### Eliminar usuario
+```http
+DELETE /users/{user_id}
+```
+
+#### Actualizar foto de perfil
+```http
+PUT /users/{user_id}/profile-picture?picture_url=https://example.com/photo.jpg
 ```
 
 ## Desarrollo
 
-### Requisitos
-
-- Python 3.8+
-- Poetry o pip
-- Docker y Docker Compose (opcional)
-
-### Setup Desarrollo
+### Pruebas
 
 ```bash
-# Instalar dependencias de desarrollo
-poetry install --with dev
-
-# Ejecutar tests
+# Ejecutar pruebas
 poetry run pytest
+
+# Con cobertura
+poetry run pytest --cov=app
 ```
+
+### Linting y Formateo
+
+```bash
+# Formatear código
+poetry run black app tests
+
+# Ordenar imports
+poetry run isort app tests
+
+# Verificar tipos
+poetry run mypy app
+
+# Linting
+poetry run pylint app
+```
+
+### Pre-commit
+
+El proyecto usa pre-commit para verificar el código antes de cada commit:
+
+```bash
+# Instalar hooks
+poetry run pre-commit install
+
+# Ejecutar manualmente
+poetry run pre-commit run --all-files
+```
+
+## Métricas y Monitoreo
+
+- Métricas expuestas en `/metrics` (Prometheus)
+- Trazas con OpenTelemetry
+- Logs estructurados con structlog
 
 ## Licencia
 
-MIT 
+Este proyecto está licenciado bajo los términos de la licencia MIT. 
